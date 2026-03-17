@@ -37,7 +37,14 @@ export async function generateTasks(mode, level, age, topic, count) {
     const text = message.content[0].text.trim();
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error('No JSON array found in response');
-    return JSON.parse(jsonMatch[0]);
+    let tasks = JSON.parse(jsonMatch[0]);
+
+    // For case mode: validate and shuffle tasks
+    if (mode === 2) {
+      tasks = validateAndShuffleCaseTasks(tasks);
+    }
+
+    return tasks;
   } catch (err) {
     console.error('Claude API error, using fallback tasks:', err.message);
     return getFallbackTasks(mode, count);
@@ -63,6 +70,42 @@ export async function checkConjugation(verb, tense, pronoun, answer) {
     console.error('Conjugation check error:', err.message);
   }
   return { correct: false, correctAnswer: null };
+}
+
+// Valid German articles (definite + indefinite)
+const VALID_ARTICLES = new Set([
+  'der', 'die', 'das', 'dem', 'den', 'des',
+  'Der', 'Die', 'Das', 'Dem', 'Den', 'Des',
+  'ein', 'eine', 'einen', 'einem', 'eines', 'einer',
+  'Ein', 'Eine', 'Einen', 'Einem', 'Eines', 'Einer',
+]);
+
+function validateAndShuffleCaseTasks(tasks) {
+  // Filter out invalid tasks (answer must be an article)
+  const valid = tasks.filter(t => {
+    if (!t.sentence || !t.answer || !t.case || !t.options) return false;
+    if (!VALID_ARTICLES.has(t.answer)) return false;
+    if (!t.sentence.includes('___')) return false;
+    // All options must be articles
+    if (!t.options.every(opt => VALID_ARTICLES.has(opt))) return false;
+    return true;
+  });
+
+  // Remove duplicate sentences
+  const seen = new Set();
+  const unique = valid.filter(t => {
+    if (seen.has(t.sentence)) return false;
+    seen.add(t.sentence);
+    return true;
+  });
+
+  // Shuffle using Fisher-Yates to ensure mixed case order
+  for (let i = unique.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [unique[i], unique[j]] = [unique[j], unique[i]];
+  }
+
+  return unique;
 }
 
 function getFallbackTasks(mode, count) {

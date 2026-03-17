@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export function useAITasks() {
   const [tasks, setTasks] = useState([]);
   const [taskIndex, setTaskIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const shuffledRef = useRef([]);
 
   const fetchTasks = useCallback(async (mode, level, age, topic, count) => {
     setLoading(true);
@@ -18,6 +19,7 @@ export function useAITasks() {
       if (!res.ok) throw new Error('Failed to fetch tasks');
       const data = await res.json();
       setTasks(data.tasks);
+      shuffledRef.current = [...data.tasks];
       setTaskIndex(0);
     } catch (err) {
       console.error('Task fetch error:', err);
@@ -28,13 +30,24 @@ export function useAITasks() {
   }, []);
 
   const getNextTask = useCallback(() => {
-    if (taskIndex >= tasks.length) {
-      return tasks[taskIndex % tasks.length] || null;
+    if (shuffledRef.current.length === 0) return null;
+
+    // If we've gone through all tasks, reshuffle
+    if (taskIndex >= shuffledRef.current.length) {
+      const reshuffled = [...shuffledRef.current];
+      for (let i = reshuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [reshuffled[i], reshuffled[j]] = [reshuffled[j], reshuffled[i]];
+      }
+      shuffledRef.current = reshuffled;
+      setTaskIndex(1);
+      return reshuffled[0];
     }
-    const task = tasks[taskIndex];
+
+    const task = shuffledRef.current[taskIndex];
     setTaskIndex(i => i + 1);
     return task;
-  }, [tasks, taskIndex]);
+  }, [taskIndex]);
 
   const currentTask = tasks[taskIndex] || null;
 

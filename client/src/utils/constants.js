@@ -33,7 +33,7 @@ export const MODE_INFO = {
       { id: 1, name: 'Stufe 1', desc: 'Nominativ + Akkusativ', level: 'A1' },
       { id: 2, name: 'Stufe 2', desc: '+ Dativ', level: 'A2' },
       { id: 3, name: 'Stufe 3', desc: '+ Genitiv', level: 'B1' },
-      { id: 4, name: 'Stufe 4', desc: 'Все 4 + притяжательные', level: 'B2' },
+      { id: 4, name: 'Stufe 4', desc: 'Все 4 падежа, B2-лексика', level: 'B2' },
     ],
   },
   [MODES.CONJUGATION]: {
