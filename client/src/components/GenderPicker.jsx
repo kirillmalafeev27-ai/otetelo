@@ -35,69 +35,47 @@ const styles = {
     transition: 'all 0.3s ease',
     minWidth: '80px',
   },
-  typeGroup: {
-    display: 'flex',
-    gap: '16px',
-    justifyContent: 'center',
-    marginTop: '16px',
-  },
-  typeBtn: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '12px 20px',
-    background: 'var(--btn-bg)',
-    border: '2px solid var(--card-border)',
-    borderRadius: 'var(--radius)',
-    color: 'var(--text)',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-  },
-  typeIcon: {
-    fontSize: '1.5rem',
-  },
-  typeName: {
-    fontSize: '0.8rem',
-    fontFamily: 'var(--font-heading)',
-  },
-  typeDesc: {
-    fontSize: '0.65rem',
-    color: 'var(--text-dim)',
-  },
   feedback: {
     padding: '8px 16px',
     borderRadius: 'var(--radius)',
     marginBottom: '12px',
     fontWeight: 600,
   },
+  instruction: {
+    color: 'var(--text-dim)',
+    fontSize: '0.8rem',
+    marginTop: '12px',
+  },
 };
 
 export default function GenderPicker({ task, onAnswer }) {
-  const [phase, setPhase] = useState('picking');
   const [feedback, setFeedback] = useState(null);
   const [correct, setCorrect] = useState(null);
+  const [answered, setAnswered] = useState(false);
 
   if (!task) return null;
 
   const handleGenderPick = (gender) => {
+    if (answered) return;
+    setAnswered(true);
+
     const isCorrect = gender === task.gender;
     setCorrect(isCorrect);
     setFeedback(isCorrect
       ? `Richtig! ${task.gender} ${task.word}`
       : `Falsch! Es heißt: ${task.gender} ${task.word}`);
 
+    // Correct: piece type = actual gender (the one they strategically chose)
+    // Wrong: random piece type (old behavior via onAnswer(gender, null))
     if (isCorrect) {
-      setPhase('choosingType');
+      setTimeout(() => {
+        onAnswer(gender, task.gender);
+      }, 800);
     } else {
       setTimeout(() => {
         onAnswer(gender, null);
       }, 1200);
     }
-  };
-
-  const handleTypePick = (type) => {
-    onAnswer(task.gender, type);
   };
 
   return (
@@ -118,7 +96,7 @@ export default function GenderPicker({ task, onAnswer }) {
         </div>
       )}
 
-      {phase === 'picking' && (
+      {!answered && (
         <>
           <div style={styles.prompt}>Welcher Artikel?</div>
           <div style={styles.btnGroup}>
@@ -142,36 +120,16 @@ export default function GenderPicker({ task, onAnswer }) {
               </button>
             ))}
           </div>
+          <div style={styles.instruction}>
+            Выбери клетку на поле после ответа
+          </div>
         </>
       )}
 
-      {phase === 'choosingType' && (
-        <>
-          <div style={styles.prompt}>Wähle den Typ deiner Figur:</div>
-          <div style={styles.typeGroup}>
-            <button style={styles.typeBtn} onClick={() => handleTypePick('der')}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#ff006e'; e.currentTarget.style.boxShadow = '0 0 12px #ff006e44'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--card-border)'; e.currentTarget.style.boxShadow = 'none'; }}>
-              <span style={styles.typeIcon}>♦</span>
-              <span style={styles.typeName}>der (Ромб)</span>
-              <span style={styles.typeDesc}>↑↓←→ прямые</span>
-            </button>
-            <button style={styles.typeBtn} onClick={() => handleTypePick('die')}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#00d4ff'; e.currentTarget.style.boxShadow = '0 0 12px #00d4ff44'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--card-border)'; e.currentTarget.style.boxShadow = 'none'; }}>
-              <span style={styles.typeIcon}>●</span>
-              <span style={styles.typeName}>die (Круг)</span>
-              <span style={styles.typeDesc}>↗↘↙↖ диагонали</span>
-            </button>
-            <button style={styles.typeBtn} onClick={() => handleTypePick('das')}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#f39c12'; e.currentTarget.style.boxShadow = '0 0 12px #f39c1244'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--card-border)'; e.currentTarget.style.boxShadow = 'none'; }}>
-              <span style={styles.typeIcon}>■</span>
-              <span style={styles.typeName}>das (Квадрат)</span>
-              <span style={styles.typeDesc}>все 8, макс. 1 вглубь</span>
-            </button>
-          </div>
-        </>
+      {answered && correct && (
+        <div style={styles.instruction}>
+          Выбери клетку на поле...
+        </div>
       )}
     </div>
   );

@@ -33,6 +33,11 @@ export function useGame() {
   const [aiAnswer, setAiAnswer] = useState(null);
   const [message, setMessage] = useState(null);
 
+  // Gender mode: word list state
+  const [selectedWordIndex, setSelectedWordIndex] = useState(null);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [usedWords, setUsedWords] = useState(new Set());
+
   const animations = useAnimations();
   const aiTasks = useAITasks();
   const taskIndexRef = useRef(0);
@@ -53,6 +58,9 @@ export function useGame() {
     setCurrentPlayer(1);
     setStats({ 1: { correct: 0, wrong: 0 }, 2: { correct: 0, wrong: 0 } });
     taskIndexRef.current = 0;
+    setSelectedWordIndex(null);
+    setSelectedArticle(null);
+    setUsedWords(new Set());
     setGamePhase(GAME_PHASE.PLAYING);
 
     const moves = getValidMoves(newBoard, newMeta, 1, selectedMode);
@@ -63,11 +71,80 @@ export function useGame() {
     return aiTasks.getNextTask();
   }, [aiTasks]);
 
-  const handleCellClick = useCallback((r, c) => {
+  // Gender mode: select word from list
+  const handleWordSelect = useCallback((index) => {
+    if (gamePhase !== GAME_PHASE.PLAYING) return;
+    if (usedWords.has(index)) return;
+    setSelectedWordIndex(index);
+    setSelectedArticle(null);
+    setCurrentTask(aiTasks.tasks[index] || null);
+  }, [gamePhase, usedWords, aiTasks.tasks]);
+
+  // Gender mode: select article
+  const handleArticleSelect = useCallback((article) => {
+    if (selectedWordIndex === null) return;
+    setSelectedArticle(article);
+  }, [selectedWordIndex]);
+
+  // Gender mode: cell click after word + article selected
+  const handleGenderCellClick = useCallback(async (r, c) => {
     if (gamePhase !== GAME_PHASE.PLAYING) return;
     if (animations.animating) return;
     if (!validMoves.some(m => m.r === r && m.c === c)) return;
 
+    // For gender mode: need word + article selected first
+    if (mode === MODES.GENDER) {
+      if (selectedWordIndex === null || selectedArticle === null) return;
+
+      const task = aiTasks.tasks[selectedWordIndex];
+      if (!task) return;
+
+      const correct = selectedArticle === task.gender;
+      const pieceType = correct ? task.gender : getRandomPieceType();
+
+      setStats(prev => ({
+        ...prev,
+        [currentPlayer]: {
+          ...prev[currentPlayer],
+          [correct ? 'correct' : 'wrong']: prev[currentPlayer][correct ? 'correct' : 'wrong'] + 1,
+        },
+      }));
+
+      // Show feedback
+      if (correct) {
+        setMessage({ type: 'success', text: `Richtig! ${task.gender} ${task.word}` });
+      } else {
+        setMessage({ type: 'error', text: `Falsch! Es heißt: ${task.gender} ${task.word}` });
+      }
+
+      // Mark word as used
+      setUsedWords(prev => new Set([...prev, selectedWordIndex]));
+
+      const flips = getFlips(board, boardMeta, r, c, currentPlayer, mode, pieceType);
+      const meta = { type: pieceType };
+      const { board: newBoard, boardMeta: newMeta } = applyMove(board, boardMeta, r, c, currentPlayer, flips, meta);
+
+      setGamePhase(GAME_PHASE.ANIMATING);
+      await animations.animatePlacement(r, c);
+      setBoard(newBoard);
+      setBoardMeta(newMeta);
+
+      if (flips.length > 0) {
+        await animations.animateFlips(flips);
+      }
+
+      // Clear gender selection state
+      setSelectedWordIndex(null);
+      setSelectedArticle(null);
+      setCurrentTask(null);
+
+      await delay(600);
+      setMessage(null);
+      await finishTurn(newBoard, newMeta);
+      return;
+    }
+
+    // Non-gender modes: original behavior
     setSelectedCell({ r, c });
     const task = getTask();
     setCurrentTask(task);
@@ -78,7 +155,7 @@ export function useGame() {
     }
 
     setGamePhase(GAME_PHASE.ANSWERING);
-  }, [gamePhase, animations.animating, validMoves, getTask, mode, boardMeta]);
+  }, [gamePhase, animations.animating, validMoves, mode, selectedWordIndex, selectedArticle, aiTasks.tasks, board, boardMeta, currentPlayer, getTask, boardMeta]);
 
   const handleGenderAnswer = useCallback(async (answer, chosenType) => {
     if (!selectedCell || !currentTask) return;
@@ -260,6 +337,8 @@ export function useGame() {
       setCurrentTask(null);
       setChainFlips([]);
       setChainIndex(0);
+      setSelectedWordIndex(null);
+      setSelectedArticle(null);
       setGamePhase(GAME_PHASE.PLAYING);
 
       if (gameConfig.gameType === 'pvai' && nextPlayer === 2) {
@@ -272,6 +351,8 @@ export function useGame() {
         setValidMoves(currentMoves);
         setSelectedCell(null);
         setCurrentTask(null);
+        setSelectedWordIndex(null);
+        setSelectedArticle(null);
         setGamePhase(GAME_PHASE.PLAYING);
         await delay(1500);
         setMessage(null);
@@ -292,7 +373,25 @@ export function useGame() {
     const thinkTime = TIMING.AI_THINK_MIN + Math.random() * (TIMING.AI_THINK_MAX - TIMING.AI_THINK_MIN);
     await delay(thinkTime);
 
-    const task = getTask();
+    // For gender mode AI: pick a random unused word
+    let task;
+    if (mode === MODES.GENDER) {
+      const availableIndices = aiTasks.tasks
+        .map((_, i) => i)
+        .filter(i => !usedWords.has(i));
+      if (availableIndices.length === 0) {
+        setMessage(null);
+        setAiAnswer(null);
+        await finishTurn(currentBoard, currentMeta);
+        return;
+      }
+      const randomIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+      task = aiTasks.tasks[randomIdx];
+      setUsedWords(prev => new Set([...prev, randomIdx]));
+    } else {
+      task = getTask();
+    }
+
     const aiResult = aiAnswerGrammar(task, mode, gameConfig.aiDifficulty, currentMeta, 0, 0);
     setAiAnswer({ task, ...aiResult });
 
@@ -319,7 +418,8 @@ export function useGame() {
     let meta = {};
 
     if (mode === MODES.GENDER) {
-      pieceType = aiResult.correct ? aiResult.pieceType : getRandomPieceType();
+      // AI: correct → actual gender piece, wrong → random
+      pieceType = aiResult.correct ? task.gender : getRandomPieceType();
       flips = getFlips(currentBoard, currentMeta, move.r, move.c, aiPlayer, mode, pieceType);
       meta = { type: pieceType };
     } else if (mode === MODES.CASE) {
@@ -351,7 +451,7 @@ export function useGame() {
     setMessage(null);
     setAiAnswer(null);
     await finishTurn(newBoard, newMeta);
-  }, [mode, gameConfig, animations, getTask]);
+  }, [mode, gameConfig, animations, getTask, aiTasks.tasks, usedWords]);
 
   const scores = board ? getScore(board) : { 1: 2, 2: 2 };
   const winner = board ? getWinner(board) : null;
@@ -371,8 +471,12 @@ export function useGame() {
     chainFlips, chainIndex,
     animations,
     aiTasks,
+    // Gender mode state
+    selectedWordIndex, selectedArticle, usedWords,
+    handleWordSelect, handleArticleSelect,
+    // Handlers
     startGame,
-    handleCellClick,
+    handleCellClick: handleGenderCellClick,
     handleGenderAnswer,
     handleCaseAnswer,
     handleConjugationAnswer,
