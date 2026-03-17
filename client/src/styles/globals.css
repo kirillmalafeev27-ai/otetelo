@@ -1,0 +1,221 @@
+:root {
+  --bg: #0a0a1a;
+  --bg-secondary: #0f0f2a;
+  --board: #0d2818;
+  --grid: #00ff8855;
+  --grid-line: #00ff8833;
+  --player1: #ff006e;
+  --player1-glow: #ff006e88;
+  --player1-bg: #1a1a2e;
+  --player2: #00d4ff;
+  --player2-glow: #00d4ff88;
+  --player2-bg: #e0e0ff;
+  --gold: #f39c12;
+  --error: #e74c3c;
+  --success: #2ecc71;
+  --text: #e0e0e0;
+  --text-dim: #888888;
+  --text-bright: #ffffff;
+  --card-bg: #111133;
+  --card-border: #333366;
+  --input-bg: #0d0d2a;
+  --input-border: #444477;
+  --btn-bg: #1a1a4e;
+  --btn-hover: #2a2a6e;
+  --overlay: rgba(0, 0, 0, 0.85);
+  --font-heading: 'Orbitron', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-german: 'Playfair Display', serif;
+  --radius: 8px;
+  --radius-lg: 16px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-body);
+  border: none;
+  outline: none;
+}
+
+input {
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.screen {
+  width: 100%;
+  max-width: 1200px;
+  padding: 20px;
+  animation: fadeIn 0.4s ease;
+}
+
+.neon-text {
+  text-shadow:
+    0 0 10px var(--player2),
+    0 0 20px var(--player2),
+    0 0 40px var(--player2-glow);
+}
+
+.neon-text-pink {
+  text-shadow:
+    0 0 10px var(--player1),
+    0 0 20px var(--player1),
+    0 0 40px var(--player1-glow);
+}
+
+.neon-btn {
+  background: var(--btn-bg);
+  color: var(--text);
+  border: 1px solid var(--card-border);
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.neon-btn:hover {
+  background: var(--btn-hover);
+  border-color: var(--player2);
+  box-shadow: 0 0 15px var(--player2-glow);
+  transform: translateY(-2px);
+}
+
+.neon-btn.primary {
+  border-color: var(--player2);
+  box-shadow: 0 0 8px var(--player2-glow);
+}
+
+.neon-btn.success {
+  border-color: var(--success);
+  box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+}
+
+.neon-btn.error {
+  border-color: var(--error);
+  box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+}
+
+.neon-btn.gold {
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(243, 156, 18, 0.4);
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.neon-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 16px;
+  transition: border-color 0.3s;
+  width: 100%;
+}
+
+.neon-input:focus {
+  border-color: var(--player2);
+  box-shadow: 0 0 8px var(--player2-glow);
+}
+
+.neon-select {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 16px;
+  transition: border-color 0.3s;
+  appearance: none;
+  width: 100%;
+}
+
+.neon-select:focus {
+  border-color: var(--player2);
+}
+
+.german-word {
+  font-family: var(--font-german);
+  font-size: 1.8em;
+  font-style: italic;
+  color: var(--text-bright);
+}
+
+.loading-dots::after {
+  content: '';
+  animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+  .screen {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .screen {
+    padding: 8px;
+  }
+}
