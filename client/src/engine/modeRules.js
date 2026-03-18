@@ -66,3 +66,29 @@ export function getRandomPieceType() {
   const types = ['der', 'die', 'das'];
   return randomChoice(types);
 }
+
+/**
+ * Ensure pronouns on a flip line are unique.
+ * If duplicates exist, replace them with unused pronouns.
+ */
+export function ensureUniquePronounsOnFlips(flips, boardMeta) {
+  const usedPronouns = new Set();
+  const result = [];
+
+  for (const flip of flips) {
+    let pronoun = boardMeta[flip.r]?.[flip.c]?.pronoun || 'ich';
+
+    if (usedPronouns.has(pronoun)) {
+      // Find an unused pronoun
+      const available = PRONOUNS.filter(p => !usedPronouns.has(p));
+      if (available.length > 0) {
+        pronoun = randomChoice(available);
+      }
+    }
+
+    usedPronouns.add(pronoun);
+    result.push({ ...flip, pronoun });
+  }
+
+  return result;
+}

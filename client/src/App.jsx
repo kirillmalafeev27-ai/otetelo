@@ -4,11 +4,11 @@ import PromptConfig from './components/PromptConfig.jsx';
 import GameBoard from './components/GameBoard.jsx';
 import ScoreBar from './components/ScoreBar.jsx';
 import TaskPanel from './components/TaskPanel.jsx';
-import ChainResolver from './components/ChainResolver.jsx';
+
 import GameOverScreen from './components/GameOverScreen.jsx';
 import WordList from './components/WordList.jsx';
 import RulesPanel from './components/RulesPanel.jsx';
-import GenderPicker from './components/GenderPicker.jsx';
+
 import { useGame } from './hooks/useGame.js';
 import { GAME_PHASE, MODES } from './utils/constants.js';
 
@@ -356,7 +356,6 @@ export default function App() {
 
   // Other modes: original layout
   const isAnswering = game.gamePhase === GAME_PHASE.ANSWERING || game.gamePhase === GAME_PHASE.CHOOSING_TYPE;
-  const isChaining = game.gamePhase === GAME_PHASE.CHAIN_RESOLVING;
 
   return (
     <div className="app">
@@ -378,27 +377,18 @@ export default function App() {
           gameType={game.gameConfig.gameType}
         />
 
-        {isChaining && game.mode === MODES.CONJUGATION ? (
-          <ChainResolver
-            chainFlips={game.chainFlips}
-            chainIndex={game.chainIndex}
-            boardMeta={game.boardMeta}
-            task={game.aiTasks.getNextTask()}
-            onAnswer={game.handleChainAnswer}
-          />
-        ) : (
-          <TaskPanel
-            mode={game.mode}
-            task={isAnswering ? game.currentTask : null}
-            gamePhase={game.gamePhase}
-            onGenderAnswer={game.handleGenderAnswer}
-            onCaseAnswer={game.handleCaseAnswer}
-            onConjugationAnswer={game.handleConjugationAnswer}
-            onSentenceAnswer={game.handleSentenceAnswer}
-            aiAnswer={game.aiAnswer}
-            message={game.message}
-          />
-        )}
+        <TaskPanel
+          mode={game.mode}
+          task={isAnswering ? game.currentTask : null}
+          gamePhase={game.gamePhase}
+          onGenderAnswer={game.handleGenderAnswer}
+          onCaseAnswer={game.handleCaseAnswer}
+          onConjugationAnswer={game.handleConjugationAnswer}
+          onSentenceAnswer={game.handleSentenceAnswer}
+          aiAnswer={game.aiAnswer}
+          message={game.message}
+          conjugationPronouns={game.conjugationPronouns}
+        />
 
         <GameBoard
           board={game.board}

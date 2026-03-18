@@ -3,7 +3,7 @@ import {
   createBoard, createBoardMeta, getValidMoves, getFlips,
   applyMove, getScore, isGameOver, getWinner
 } from '../engine/reversi.js';
-import { calculateShields, assignPronoun, getRandomPieceType, checkWordOrder } from '../engine/modeRules.js';
+import { calculateShields, assignPronoun, getRandomPieceType, checkWordOrder, ensureUniquePronounsOnFlips } from '../engine/modeRules.js';
 import { getAIMove, aiAnswerGrammar } from '../engine/aiPlayer.js';
 import { GAME_PHASE, MODES, TIMING } from '../utils/constants.js';
 import { delay } from '../utils/helpers.js';
@@ -38,6 +38,10 @@ export function useGame() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [usedWords, setUsedWords] = useState(new Set());
 
+  // Conjugation mode: flip pronouns state
+  const [conjugationFlips, setConjugationFlips] = useState([]);
+  const [conjugationPronouns, setConjugationPronouns] = useState([]);
+
   const animations = useAnimations();
   const aiTasks = useAITasks();
   const taskIndexRef = useRef(0);
@@ -52,7 +56,7 @@ export function useGame() {
     await aiTasks.fetchTasks(selectedMode, selectedLevel, config.age || 16, config.topic || 'Alltag', taskCount);
 
     const newBoard = createBoard();
-    const newMeta = createBoardMeta();
+    const newMeta = createBoardMeta(selectedMode);
     setBoard(newBoard);
     setBoardMeta(newMeta);
     setCurrentPlayer(1);
@@ -144,15 +148,30 @@ export function useGame() {
       return;
     }
 
-    // Non-gender modes: original behavior
+    // Conjugation mode: calculate flips, collect pronouns, show task
+    if (mode === MODES.CONJUGATION) {
+      const allFlips = getFlips(board, boardMeta, r, c, currentPlayer, mode, null);
+      if (allFlips.length === 0) return; // no flips possible
+
+      // Ensure unique pronouns on the flip line
+      const uniqueFlips = ensureUniquePronounsOnFlips(allFlips, boardMeta);
+      const pronouns = uniqueFlips.map(f => f.pronoun);
+
+      setSelectedCell({ r, c });
+      setConjugationFlips(uniqueFlips);
+      setConjugationPronouns(pronouns);
+
+      // Pick a task (verb) from the pool
+      const task = getTask();
+      setCurrentTask(task);
+      setGamePhase(GAME_PHASE.ANSWERING);
+      return;
+    }
+
+    // Other non-gender modes: original behavior
     setSelectedCell({ r, c });
     const task = getTask();
     setCurrentTask(task);
-
-    if (mode === MODES.CONJUGATION) {
-      const pronoun = assignPronoun(boardMeta, r, c);
-      setCurrentTask(prev => prev ? { ...prev, assignedPronoun: pronoun } : null);
-    }
 
     setGamePhase(GAME_PHASE.ANSWERING);
   }, [gamePhase, animations.animating, validMoves, mode, selectedWordIndex, selectedArticle, aiTasks.tasks, board, boardMeta, currentPlayer, getTask, boardMeta]);
@@ -217,77 +236,50 @@ export function useGame() {
     await finishTurn(newBoard, newMeta);
   }, [selectedCell, currentTask, currentPlayer, board, boardMeta, mode, animations]);
 
-  const handleConjugationAnswer = useCallback(async (answer) => {
+  // Conjugation mode: batch answer - results is { pronoun: true/false }
+  const handleConjugationAnswer = useCallback(async (results) => {
     if (!selectedCell || !currentTask) return;
     const { r, c } = selectedCell;
-    const pronoun = currentTask.assignedPronoun;
-    const correctForm = currentTask.conjugation?.[pronoun];
-    const correct = answer.trim().toLowerCase() === correctForm?.toLowerCase();
+
+    // Count correct/wrong
+    const correctCount = Object.values(results).filter(Boolean).length;
+    const wrongCount = Object.values(results).filter(v => !v).length;
 
     setStats(prev => ({
       ...prev,
       [currentPlayer]: {
         ...prev[currentPlayer],
-        [correct ? 'correct' : 'wrong']: prev[currentPlayer][correct ? 'correct' : 'wrong'] + 1,
+        correct: prev[currentPlayer].correct + correctCount,
+        wrong: prev[currentPlayer].wrong + wrongCount,
       },
     }));
 
-    const allFlips = correct ? getFlips(board, boardMeta, r, c, currentPlayer, mode, null) : [];
-    const meta = { pronoun };
-    const { board: newBoard, boardMeta: newMeta } = applyMove(board, boardMeta, r, c, currentPlayer, allFlips.length >= 3 ? [] : allFlips, meta);
+    // Only flip pieces where conjugation was correct
+    const successFlips = conjugationFlips.filter(f => results[f.pronoun]);
+
+    // Assign a pronoun to the new piece
+    const newPronoun = assignPronoun(boardMeta, r, c);
+    const meta = { pronoun: newPronoun };
+    const { board: newBoard, boardMeta: newMeta } = applyMove(board, boardMeta, r, c, currentPlayer, successFlips, meta);
 
     setGamePhase(GAME_PHASE.ANIMATING);
     await animations.animatePlacement(r, c);
     setBoard(newBoard);
     setBoardMeta(newMeta);
 
-    if (allFlips.length >= 3 && correct) {
-      setChainFlips(allFlips);
-      setChainIndex(0);
-      setGamePhase(GAME_PHASE.CHAIN_RESOLVING);
-      return;
+    if (successFlips.length > 0) {
+      await animations.animateFlips(successFlips);
     }
 
-    if (allFlips.length > 0 && allFlips.length < 3) {
-      await animations.animateFlips(allFlips);
-    }
+    // Clear conjugation state
+    setConjugationFlips([]);
+    setConjugationPronouns([]);
 
     await finishTurn(newBoard, newMeta);
-  }, [selectedCell, currentTask, currentPlayer, board, boardMeta, mode, animations]);
+  }, [selectedCell, currentTask, currentPlayer, board, boardMeta, conjugationFlips, animations]);
 
-  const handleChainAnswer = useCallback(async (answer, chainTask) => {
-    const flip = chainFlips[chainIndex];
-    if (!flip || !chainTask) return;
-
-    const pronoun = boardMeta[flip.r][flip.c]?.pronoun || 'ich';
-    const correctForm = chainTask.conjugation?.[pronoun];
-    const correct = answer.trim().toLowerCase() === correctForm?.toLowerCase();
-
-    if (correct) {
-      const newBoard = JSON.parse(JSON.stringify(board));
-      const newMeta = JSON.parse(JSON.stringify(boardMeta));
-      newBoard[flip.r][flip.c] = { player: currentPlayer };
-
-      animations.highlightChain(chainIndex);
-      await delay(TIMING.PIECE_FLIP + TIMING.FLIP_DELAY);
-
-      setBoard(newBoard);
-      setBoardMeta(newMeta);
-
-      if (chainIndex + 1 < chainFlips.length) {
-        setChainIndex(chainIndex + 1);
-      } else {
-        animations.clearChainHighlight();
-        await finishTurn(newBoard, newMeta);
-      }
-    } else {
-      setMessage({ type: 'error', text: `Kette gebrochen! Richtig: ${correctForm}` });
-      animations.clearChainHighlight();
-      await delay(1500);
-      setMessage(null);
-      await finishTurn(board, boardMeta);
-    }
-  }, [chainFlips, chainIndex, board, boardMeta, currentPlayer, animations]);
+  // Chain answer kept for backwards compatibility but no longer used by conjugation mode
+  const handleChainAnswer = useCallback(async () => {}, []);
 
   const handleSentenceAnswer = useCallback(async (submittedOrder) => {
     if (!selectedCell || !currentTask) return;
@@ -427,9 +419,13 @@ export function useGame() {
       flips = getFlips(currentBoard, currentMeta, move.r, move.c, aiPlayer, mode, null);
       meta = shieldData;
     } else if (mode === MODES.CONJUGATION) {
-      const pronoun = assignPronoun(currentMeta, move.r, move.c);
-      flips = aiResult.correct ? getFlips(currentBoard, currentMeta, move.r, move.c, aiPlayer, mode, null) : [];
-      meta = { pronoun };
+      const allFlips = getFlips(currentBoard, currentMeta, move.r, move.c, aiPlayer, mode, null);
+      const uniqueFlips = ensureUniquePronounsOnFlips(allFlips, currentMeta);
+      // AI answers each pronoun based on difficulty accuracy
+      const accuracy = gameConfig.aiDifficulty === 'EASY' ? 0.7 : gameConfig.aiDifficulty === 'HARD' ? 0.95 : 0.85;
+      flips = uniqueFlips.filter(() => Math.random() < accuracy);
+      const newPronoun = assignPronoun(currentMeta, move.r, move.c);
+      meta = { pronoun: newPronoun };
     } else if (mode === MODES.SENTENCE) {
       if (aiResult.result === 'full') {
         flips = getFlips(currentBoard, currentMeta, move.r, move.c, aiPlayer, mode, null, { bonus: true });
@@ -474,6 +470,8 @@ export function useGame() {
     // Gender mode state
     selectedWordIndex, selectedArticle, usedWords,
     handleWordSelect, handleArticleSelect,
+    // Conjugation mode state
+    conjugationFlips, conjugationPronouns,
     // Handlers
     startGame,
     handleCellClick: handleGenderCellClick,

@@ -11,7 +11,7 @@ export function createBoard() {
   return board;
 }
 
-export function createBoardMeta() {
+export function createBoardMeta(mode) {
   const meta = Array.from({ length: BOARD_SIZE }, () =>
     Array.from({ length: BOARD_SIZE }, () => ({
       type: null,
@@ -21,6 +21,16 @@ export function createBoardMeta() {
       dativProtect: false,
     }))
   );
+
+  // For conjugation mode: assign default pronouns to starting pieces
+  if (mode === MODES.CONJUGATION) {
+    const mid = BOARD_SIZE / 2;
+    meta[mid - 1][mid - 1].pronoun = 'ich';       // top-left (player 2)
+    meta[mid - 1][mid].pronoun = 'du';             // top-right (player 1)
+    meta[mid][mid - 1].pronoun = 'er/sie/es';      // bottom-left (player 1)
+    meta[mid][mid].pronoun = 'wir';                // bottom-right (player 2)
+  }
+
   return meta;
 }
 

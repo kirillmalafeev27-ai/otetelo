@@ -64,6 +64,7 @@ function TypewriterText({ text, speed = TIMING.TYPEWRITER_SPEED }) {
 export default function TaskPanel({
   mode, task, gamePhase, onGenderAnswer, onCaseAnswer,
   onConjugationAnswer, onSentenceAnswer, aiAnswer, message,
+  conjugationPronouns,
 }) {
   if (message) {
     return (
@@ -102,7 +103,7 @@ export default function TaskPanel({
         <CasePicker task={task} onAnswer={onCaseAnswer} />
       )}
       {mode === MODES.CONJUGATION && (
-        <ConjugationInput task={task} onAnswer={onConjugationAnswer} />
+        <ConjugationInput task={task} flipPronouns={conjugationPronouns} onAnswer={onConjugationAnswer} />
       )}
       {mode === MODES.SENTENCE && (
         <SentenceBuilder task={task} onAnswer={onSentenceAnswer} />

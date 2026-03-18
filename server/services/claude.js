@@ -44,6 +44,11 @@ export async function generateTasks(mode, level, age, topic, count) {
       tasks = validateAndShuffleCaseTasks(tasks);
     }
 
+    // For conjugation mode: validate and shuffle tasks
+    if (mode === 3) {
+      tasks = validateAndShuffleConjugationTasks(tasks);
+    }
+
     return tasks;
   } catch (err) {
     console.error('Claude API error, using fallback tasks:', err.message);
@@ -100,6 +105,34 @@ function validateAndShuffleCaseTasks(tasks) {
   });
 
   // Shuffle using Fisher-Yates to ensure mixed case order
+  for (let i = unique.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [unique[i], unique[j]] = [unique[j], unique[i]];
+  }
+
+  return unique;
+}
+
+function validateAndShuffleConjugationTasks(tasks) {
+  const VALID_PRONOUNS = ['ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie'];
+
+  // Filter out invalid tasks
+  const valid = tasks.filter(t => {
+    if (!t.verb || !t.tense || !t.conjugation) return false;
+    // Must have conjugation for all 6 pronouns
+    return VALID_PRONOUNS.every(p => typeof t.conjugation[p] === 'string' && t.conjugation[p].length > 0);
+  });
+
+  // Remove duplicate verb+tense combinations
+  const seen = new Set();
+  const unique = valid.filter(t => {
+    const key = `${t.verb}-${t.tense}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // Shuffle using Fisher-Yates
   for (let i = unique.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [unique[i], unique[j]] = [unique[j], unique[i]];
