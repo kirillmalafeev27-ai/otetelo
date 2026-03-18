@@ -10,68 +10,88 @@ const styles = {
     color: 'var(--text-bright)',
     marginBottom: '4px',
     fontStyle: 'italic',
+    letterSpacing: '0.02em',
   },
   tense: {
     fontFamily: 'var(--font-heading)',
-    fontSize: '0.8rem',
-    color: 'var(--text-dim)',
-    marginBottom: '16px',
+    fontSize: '0.7rem',
+    color: 'var(--text-muted)',
+    marginBottom: '18px',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
   },
   pronounList: {
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
     maxWidth: '420px',
-    margin: '0 auto 16px',
+    margin: '0 auto 18px',
   },
   pronounRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
+    transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
   },
   pronounLabel: {
     fontFamily: 'var(--font-heading)',
-    fontSize: '0.95rem',
+    fontSize: '0.8rem',
     color: 'var(--player2)',
     width: '80px',
     textAlign: 'right',
     flexShrink: 0,
+    letterSpacing: '0.03em',
+    opacity: 0.85,
   },
   input: {
     flex: 1,
-    padding: '8px 12px',
+    padding: '10px 14px',
     fontSize: '1rem',
     fontFamily: 'var(--font-german)',
     background: 'var(--input-bg)',
-    border: '2px solid var(--input-border)',
+    backdropFilter: 'blur(4px)',
+    border: '1.5px solid var(--input-border)',
     borderRadius: 'var(--radius)',
     color: 'var(--text-bright)',
+    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
   },
   statusIcon: {
-    width: '28px',
-    fontSize: '1.1rem',
+    width: '26px',
+    fontSize: '1rem',
     textAlign: 'center',
     flexShrink: 0,
+    transition: 'all 0.4s ease',
   },
   submitBtn: {
-    padding: '10px 28px',
-    fontSize: '1rem',
+    padding: '11px 32px',
+    fontSize: '0.9rem',
     fontWeight: 700,
     fontFamily: 'var(--font-heading)',
+    letterSpacing: '0.08em',
     background: 'var(--btn-bg)',
-    border: '2px solid var(--player2)',
+    backdropFilter: 'blur(8px)',
+    border: '1.5px solid rgba(61, 184, 232, 0.3)',
     borderRadius: 'var(--radius)',
     color: 'var(--player2)',
     cursor: 'pointer',
-    transition: 'all 0.3s',
-    marginTop: '8px',
+    transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+    marginTop: '6px',
   },
   feedback: {
-    padding: '10px 16px',
+    padding: '12px 18px',
     borderRadius: 'var(--radius)',
-    marginTop: '12px',
+    marginTop: '14px',
     fontWeight: 600,
-    fontSize: '0.9rem',
+    fontSize: '0.88rem',
+    backdropFilter: 'blur(4px)',
+    letterSpacing: '0.02em',
+  },
+  correction: {
+    fontSize: '0.78rem',
+    marginTop: '5px',
+    opacity: 0.75,
+    fontFamily: 'var(--font-german)',
+    fontStyle: 'italic',
   },
 };
 
@@ -85,12 +105,11 @@ export default function ConjugationInput({ task, flipPronouns, onAnswer }) {
     setAnswers({});
     setSubmitted(false);
     setResults({});
-    // Focus first input
     if (flipPronouns?.length > 0) {
       setTimeout(() => {
         const firstRef = inputRefs.current[flipPronouns[0]];
         if (firstRef) firstRef.focus();
-      }, 100);
+      }, 150);
     }
   }, [task, flipPronouns]);
 
@@ -114,7 +133,6 @@ export default function ConjugationInput({ task, flipPronouns, onAnswer }) {
 
   const handleSubmit = () => {
     if (submitted) return;
-    // Check each pronoun's answer
     const newResults = {};
     for (const pronoun of flipPronouns) {
       const userAnswer = (answers[pronoun] || '').trim().toLowerCase();
@@ -124,10 +142,9 @@ export default function ConjugationInput({ task, flipPronouns, onAnswer }) {
     setResults(newResults);
     setSubmitted(true);
 
-    // Send results back after delay
     setTimeout(() => {
       onAnswer(newResults);
-    }, 1500);
+    }, 1600);
   };
 
   const allFilled = flipPronouns.every(p => (answers[p] || '').trim().length > 0);
@@ -140,42 +157,95 @@ export default function ConjugationInput({ task, flipPronouns, onAnswer }) {
       <div style={styles.tense}>{task.tense}</div>
 
       <div style={styles.pronounList}>
-        {flipPronouns.map((pronoun, idx) => (
-          <div key={pronoun} style={styles.pronounRow}>
-            <span style={styles.pronounLabel}>{pronoun}</span>
-            <input
-              ref={el => { inputRefs.current[pronoun] = el; }}
+        {flipPronouns.map((pronoun, idx) => {
+          const isCorrect = submitted && results[pronoun];
+          const isWrong = submitted && !results[pronoun];
+
+          return (
+            <div
+              key={pronoun}
               style={{
-                ...styles.input,
-                borderColor: submitted
-                  ? (results[pronoun] ? 'var(--success)' : 'var(--error)')
-                  : 'var(--input-border)',
+                ...styles.pronounRow,
+                transform: submitted ? (isCorrect ? 'translateX(2px)' : isWrong ? 'translateX(-2px)' : '') : '',
               }}
-              value={answers[pronoun] || ''}
-              onChange={e => handleChange(pronoun, e.target.value)}
-              onKeyDown={e => handleKeyDown(e, pronoun, idx)}
-              placeholder="..."
-              disabled={submitted}
-            />
-            <span style={styles.statusIcon}>
-              {submitted && (results[pronoun] ? '✓' : '✗')}
-            </span>
-          </div>
-        ))}
+              className={isWrong ? 'shake' : ''}
+            >
+              <span style={{
+                ...styles.pronounLabel,
+                color: submitted
+                  ? (isCorrect ? 'var(--success)' : 'var(--error)')
+                  : 'var(--player2)',
+              }}>
+                {pronoun}
+              </span>
+              <input
+                ref={el => { inputRefs.current[pronoun] = el; }}
+                style={{
+                  ...styles.input,
+                  borderColor: submitted
+                    ? (isCorrect ? 'rgba(60, 200, 120, 0.4)' : 'rgba(224, 80, 80, 0.4)')
+                    : 'var(--input-border)',
+                  boxShadow: submitted
+                    ? (isCorrect
+                      ? '0 0 8px rgba(60, 200, 120, 0.1)'
+                      : '0 0 8px rgba(224, 80, 80, 0.1)')
+                    : 'none',
+                }}
+                value={answers[pronoun] || ''}
+                onChange={e => handleChange(pronoun, e.target.value)}
+                onKeyDown={e => handleKeyDown(e, pronoun, idx)}
+                onFocus={e => {
+                  if (!submitted) {
+                    e.currentTarget.style.borderColor = 'rgba(61, 184, 232, 0.4)';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(61, 184, 232, 0.08)';
+                  }
+                }}
+                onBlur={e => {
+                  if (!submitted) {
+                    e.currentTarget.style.borderColor = 'var(--input-border)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }
+                }}
+                placeholder="..."
+                disabled={submitted}
+              />
+              <span style={{
+                ...styles.statusIcon,
+                color: isCorrect ? 'var(--success)' : 'var(--error)',
+                opacity: submitted ? 1 : 0,
+                transform: submitted ? 'scale(1)' : 'scale(0.5)',
+              }}>
+                {submitted && (isCorrect ? '\u2713' : '\u2717')}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {!submitted && (
         <button
           style={{
             ...styles.submitBtn,
-            opacity: allFilled ? 1 : 0.5,
+            opacity: allFilled ? 1 : 0.4,
             cursor: allFilled ? 'pointer' : 'default',
           }}
           onClick={allFilled ? handleSubmit : undefined}
-          onMouseEnter={e => { if (allFilled) e.currentTarget.style.background = 'rgba(0,212,255,0.1)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--btn-bg)'; }}
+          onMouseEnter={e => {
+            if (allFilled) {
+              e.currentTarget.style.background = 'rgba(61, 184, 232, 0.08)';
+              e.currentTarget.style.borderColor = 'rgba(61, 184, 232, 0.5)';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(61, 184, 232, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'var(--btn-bg)';
+            e.currentTarget.style.borderColor = 'rgba(61, 184, 232, 0.3)';
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
         >
-          Prüfen
+          PR\u00dcFEN
         </button>
       )}
 
@@ -184,17 +254,22 @@ export default function ConjugationInput({ task, flipPronouns, onAnswer }) {
           style={{
             ...styles.feedback,
             background: correctCount === totalCount
-              ? 'rgba(46,204,113,0.15)'
+              ? 'rgba(60, 200, 120, 0.08)'
               : correctCount > 0
-                ? 'rgba(243,156,18,0.15)'
-                : 'rgba(231,76,60,0.15)',
+                ? 'rgba(232, 168, 50, 0.08)'
+                : 'rgba(224, 80, 80, 0.08)',
             color: correctCount === totalCount
               ? 'var(--success)'
               : correctCount > 0
-                ? '#f39c12'
+                ? 'var(--gold-soft)'
                 : 'var(--error)',
-            border: `1px solid ${correctCount === totalCount ? 'var(--success)' : correctCount > 0 ? '#f39c12' : 'var(--error)'}`,
+            border: `1px solid ${correctCount === totalCount
+              ? 'rgba(60, 200, 120, 0.2)'
+              : correctCount > 0
+                ? 'rgba(232, 168, 50, 0.2)'
+                : 'rgba(224, 80, 80, 0.2)'}`,
           }}
+          className={correctCount === totalCount ? 'correct-flash' : correctCount === 0 ? 'shake' : ''}
         >
           {correctCount === totalCount
             ? `Alles richtig! ${correctCount}/${totalCount} Figuren werden umgedreht.`
@@ -202,8 +277,8 @@ export default function ConjugationInput({ task, flipPronouns, onAnswer }) {
               ? `${correctCount}/${totalCount} richtig. Nur korrekte Figuren werden umgedreht.`
               : `Alles falsch! Keine Figuren werden umgedreht.`}
           {flipPronouns.filter(p => !results[p]).map(p => (
-            <div key={p} style={{ fontSize: '0.8rem', marginTop: '4px', opacity: 0.8 }}>
-              {p} → {task.conjugation?.[p]}
+            <div key={p} style={styles.correction}>
+              {p} \u2192 {task.conjugation?.[p]}
             </div>
           ))}
         </div>

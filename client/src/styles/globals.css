@@ -1,33 +1,60 @@
 :root {
-  --bg: #0a0a1a;
-  --bg-secondary: #0f0f2a;
-  --board: #0d2818;
-  --grid: #00ff8855;
-  --grid-line: #00ff8833;
-  --player1: #ff006e;
-  --player1-glow: #ff006e88;
-  --player1-bg: #1a1a2e;
-  --player2: #00d4ff;
-  --player2-glow: #00d4ff88;
-  --player2-bg: #e0e0ff;
-  --gold: #f39c12;
-  --error: #e74c3c;
-  --success: #2ecc71;
-  --text: #e0e0e0;
-  --text-dim: #888888;
-  --text-bright: #ffffff;
-  --card-bg: #111133;
-  --card-border: #333366;
-  --input-bg: #0d0d2a;
-  --input-border: #444477;
-  --btn-bg: #1a1a4e;
-  --btn-hover: #2a2a6e;
-  --overlay: rgba(0, 0, 0, 0.85);
+  /* === PREMIUM COLOR PALETTE === */
+  --bg: #06060f;
+  --bg-secondary: #0a0a1e;
+  --bg-elevated: #0e0e24;
+  --bg-glass: rgba(12, 12, 36, 0.65);
+  --bg-glass-hover: rgba(18, 18, 48, 0.75);
+
+  /* Board */
+  --board: #080818;
+  --board-cell: rgba(10, 10, 30, 0.8);
+  --grid: rgba(100, 140, 255, 0.12);
+  --grid-line: rgba(100, 140, 255, 0.06);
+  --grid-glow: rgba(100, 140, 255, 0.03);
+
+  /* Players - refined, less saturated */
+  --player1: #e8365d;
+  --player1-soft: #ff4d7a;
+  --player1-glow: rgba(232, 54, 93, 0.4);
+  --player1-bg: rgba(232, 54, 93, 0.08);
+  --player2: #3db8e8;
+  --player2-soft: #5bc8f0;
+  --player2-glow: rgba(61, 184, 232, 0.4);
+  --player2-bg: rgba(61, 184, 232, 0.08);
+
+  /* Accents */
+  --gold: #e8a832;
+  --gold-soft: #f0c060;
+  --error: #e05050;
+  --success: #3cc878;
+  --info: #648cff;
+
+  /* Text hierarchy */
+  --text: #c8c8d8;
+  --text-dim: #6a6a80;
+  --text-muted: #4a4a60;
+  --text-bright: #f0f0ff;
+
+  /* Surfaces */
+  --card-bg: rgba(14, 14, 36, 0.6);
+  --card-border: rgba(100, 140, 255, 0.1);
+  --card-border-hover: rgba(100, 140, 255, 0.2);
+  --input-bg: rgba(8, 8, 24, 0.8);
+  --input-border: rgba(100, 140, 255, 0.15);
+  --btn-bg: rgba(14, 14, 40, 0.7);
+  --btn-hover: rgba(20, 20, 52, 0.8);
+  --overlay: rgba(4, 4, 12, 0.92);
+
+  /* Typography */
   --font-heading: 'Orbitron', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-german: 'Playfair Display', serif;
-  --radius: 8px;
+
+  /* Radii */
+  --radius: 10px;
   --radius-lg: 16px;
+  --radius-xl: 24px;
 }
 
 *, *::before, *::after {
@@ -43,16 +70,22 @@ html, body, #root {
 
 body {
   background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(61, 184, 232, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(232, 54, 93, 0.02) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(100, 140, 255, 0.02) 0%, transparent 50%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-body);
   line-height: 1.5;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4 {
   font-family: var(--font-heading);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 button {
@@ -67,6 +100,13 @@ input {
   outline: none;
 }
 
+/* === SCROLLBAR === */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(100, 140, 255, 0.15); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(100, 140, 255, 0.3); }
+
+/* === LAYOUT === */
 .app {
   min-height: 100vh;
   display: flex;
@@ -78,90 +118,101 @@ input {
   width: 100%;
   max-width: 1200px;
   padding: 20px;
-  animation: fadeIn 0.4s ease;
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* === NEON TEXT === */
 .neon-text {
   text-shadow:
-    0 0 10px var(--player2),
-    0 0 20px var(--player2),
-    0 0 40px var(--player2-glow);
+    0 0 8px rgba(61, 184, 232, 0.5),
+    0 0 20px rgba(61, 184, 232, 0.2);
 }
 
 .neon-text-pink {
   text-shadow:
-    0 0 10px var(--player1),
-    0 0 20px var(--player1),
-    0 0 40px var(--player1-glow);
+    0 0 8px rgba(232, 54, 93, 0.5),
+    0 0 20px rgba(232, 54, 93, 0.2);
 }
 
+/* === BUTTONS === */
 .neon-btn {
   background: var(--btn-bg);
+  backdrop-filter: blur(8px);
   color: var(--text);
   border: 1px solid var(--card-border);
   padding: 12px 24px;
   border-radius: var(--radius);
   font-size: 16px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
 
 .neon-btn:hover {
   background: var(--btn-hover);
-  border-color: var(--player2);
-  box-shadow: 0 0 15px var(--player2-glow);
+  border-color: rgba(100, 140, 255, 0.3);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(100, 140, 255, 0.08);
   transform: translateY(-2px);
 }
 
+.neon-btn:active {
+  transform: translateY(0);
+  transition-duration: 0.1s;
+}
+
 .neon-btn.primary {
-  border-color: var(--player2);
-  box-shadow: 0 0 8px var(--player2-glow);
+  border-color: rgba(61, 184, 232, 0.4);
+  box-shadow: 0 0 12px rgba(61, 184, 232, 0.15);
 }
 
 .neon-btn.success {
-  border-color: var(--success);
-  box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+  border-color: rgba(60, 200, 120, 0.4);
+  box-shadow: 0 0 12px rgba(60, 200, 120, 0.15);
 }
 
 .neon-btn.error {
-  border-color: var(--error);
-  box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+  border-color: rgba(224, 80, 80, 0.4);
+  box-shadow: 0 0 12px rgba(224, 80, 80, 0.15);
 }
 
 .neon-btn.gold {
-  border-color: var(--gold);
-  box-shadow: 0 0 8px rgba(243, 156, 18, 0.4);
+  border-color: rgba(232, 168, 50, 0.4);
+  box-shadow: 0 0 12px rgba(232, 168, 50, 0.15);
 }
 
+/* === CARDS === */
 .card {
   background: var(--card-bg);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  transform: translateY(-3px);
+  border-color: var(--card-border-hover);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(100, 140, 255, 0.04);
 }
 
+/* === INPUTS === */
 .neon-input {
   background: var(--input-bg);
+  backdrop-filter: blur(4px);
   border: 1px solid var(--input-border);
   color: var(--text);
   padding: 10px 16px;
   border-radius: var(--radius);
   font-size: 16px;
-  transition: border-color 0.3s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
 }
 
 .neon-input:focus {
-  border-color: var(--player2);
-  box-shadow: 0 0 8px var(--player2-glow);
+  border-color: rgba(61, 184, 232, 0.4);
+  box-shadow: 0 0 12px rgba(61, 184, 232, 0.1), 0 0 4px rgba(61, 184, 232, 0.2);
 }
 
 .neon-select {
@@ -177,7 +228,7 @@ input {
 }
 
 .neon-select:focus {
-  border-color: var(--player2);
+  border-color: rgba(61, 184, 232, 0.4);
 }
 
 .german-word {
@@ -199,7 +250,7 @@ input {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -209,13 +260,9 @@ input {
 }
 
 @media (max-width: 768px) {
-  .screen {
-    padding: 10px;
-  }
+  .screen { padding: 10px; }
 }
 
 @media (max-width: 480px) {
-  .screen {
-    padding: 8px;
-  }
+  .screen { padding: 8px; }
 }

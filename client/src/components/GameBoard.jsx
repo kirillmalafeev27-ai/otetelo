@@ -8,10 +8,12 @@ const boardStyles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    position: 'relative',
   },
   boardContainer: {
     display: 'flex',
     gap: 0,
+    position: 'relative',
   },
   colLabels: {
     display: 'grid',
@@ -22,9 +24,11 @@ const boardStyles = {
   colLabel: {
     textAlign: 'center',
     fontFamily: 'var(--font-heading)',
-    fontSize: '0.7rem',
-    color: 'var(--text-dim)',
-    padding: '4px 0',
+    fontSize: '0.65rem',
+    color: 'var(--text-muted, #4a4a60)',
+    padding: '6px 0',
+    letterSpacing: '0.05em',
+    transition: 'color 0.3s ease',
   },
   rowLabels: {
     display: 'flex',
@@ -34,9 +38,11 @@ const boardStyles = {
   },
   rowLabel: {
     fontFamily: 'var(--font-heading)',
-    fontSize: '0.7rem',
-    color: 'var(--text-dim)',
+    fontSize: '0.65rem',
+    color: 'var(--text-muted, #4a4a60)',
     textAlign: 'center',
+    letterSpacing: '0.05em',
+    transition: 'color 0.3s ease',
   },
   grid: {
     display: 'grid',
@@ -44,10 +50,23 @@ const boardStyles = {
     gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)`,
     width: 'min(85vw, 540px)',
     height: 'min(85vw, 540px)',
-    border: '2px solid var(--grid)',
-    borderRadius: '4px',
-    boxShadow: '0 0 20px rgba(0, 255, 136, 0.1)',
+    borderRadius: '12px',
     overflow: 'hidden',
+    position: 'relative',
+    animation: 'boardAmbient 6s ease-in-out infinite',
+  },
+  boardFrame: {
+    position: 'absolute',
+    inset: '-1px',
+    borderRadius: '13px',
+    padding: '1px',
+    background: 'linear-gradient(135deg, rgba(61, 184, 232, 0.2) 0%, rgba(100, 140, 255, 0.08) 30%, rgba(232, 54, 93, 0.12) 60%, rgba(61, 184, 232, 0.2) 100%)',
+    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+    WebkitMaskComposite: 'xor',
+    maskComposite: 'exclude',
+    pointerEvents: 'none',
+    backgroundSize: '200% 200%',
+    animation: 'gradientShift 8s ease infinite',
   },
 };
 
@@ -76,32 +95,37 @@ export default function GameBoard({
           ))}
         </div>
 
-        <div style={boardStyles.grid}>
-          {Array.from({ length: BOARD_SIZE }).map((_, r) =>
-            Array.from({ length: BOARD_SIZE }).map((_, c) => {
-              const key = `${r}-${c}`;
-              const isValid = validSet.has(key);
-              const isSelected = selectedCell?.r === r && selectedCell?.c === c;
-              const isNew = animations.newPiece === key;
-              const isFlipping = animations.flippingCells.has(key);
-              const chainActive = chainFlips?.some((f, i) => f.r === r && f.c === c && i === chainIndex);
+        <div style={{ position: 'relative' }}>
+          {/* Animated gradient border frame */}
+          <div style={boardStyles.boardFrame} />
 
-              return (
-                <Cell
-                  key={key}
-                  piece={board[r][c]}
-                  meta={boardMeta[r][c]}
-                  isValid={isValid}
-                  isSelected={isSelected}
-                  playerColor={playerColor}
-                  onClick={() => onCellClick(r, c)}
-                  isNew={isNew}
-                  isFlipping={isFlipping}
-                  chainActive={chainActive}
-                />
-              );
-            })
-          )}
+          <div style={boardStyles.grid}>
+            {Array.from({ length: BOARD_SIZE }).map((_, r) =>
+              Array.from({ length: BOARD_SIZE }).map((_, c) => {
+                const key = `${r}-${c}`;
+                const isValid = validSet.has(key);
+                const isSelected = selectedCell?.r === r && selectedCell?.c === c;
+                const isNew = animations.newPiece === key;
+                const isFlipping = animations.flippingCells.has(key);
+                const chainActive = chainFlips?.some((f, i) => f.r === r && f.c === c && i === chainIndex);
+
+                return (
+                  <Cell
+                    key={key}
+                    piece={board[r][c]}
+                    meta={boardMeta[r][c]}
+                    isValid={isValid}
+                    isSelected={isSelected}
+                    playerColor={playerColor}
+                    onClick={() => onCellClick(r, c)}
+                    isNew={isNew}
+                    isFlipping={isFlipping}
+                    chainActive={chainActive}
+                  />
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -17,15 +17,15 @@ const gameScreenStyles = {
     width: '100%',
     maxWidth: '700px',
     margin: '0 auto',
-    padding: '12px',
+    padding: '16px',
   },
   genderLayout: {
     display: 'flex',
-    gap: '12px',
+    gap: '14px',
     width: '100%',
     maxWidth: '1100px',
     margin: '0 auto',
-    padding: '12px',
+    padding: '14px',
     alignItems: 'flex-start',
   },
   genderLeft: {
@@ -49,61 +49,72 @@ const gameScreenStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    gap: '24px',
+    gap: '28px',
   },
   loadingTitle: {
     fontFamily: 'var(--font-heading)',
-    fontSize: '1.5rem',
+    fontSize: '1.3rem',
     color: 'var(--player2)',
+    letterSpacing: '0.08em',
   },
   loadingBar: {
-    width: '200px',
-    height: '4px',
-    background: 'var(--card-border)',
+    width: '220px',
+    height: '2px',
+    background: 'rgba(100, 140, 255, 0.1)',
     borderRadius: '2px',
     overflow: 'hidden',
   },
   loadingFill: {
     width: '60%',
     height: '100%',
-    background: 'linear-gradient(90deg, var(--player2), var(--player1))',
+    background: 'linear-gradient(90deg, var(--player2), rgba(100, 140, 255, 0.6), var(--player1))',
     borderRadius: '2px',
-    animation: 'loadingSlide 1.5s ease infinite',
+    animation: 'loadingSlide 1.8s ease infinite',
+    backgroundSize: '200% 100%',
   },
   backBtn: {
     position: 'absolute',
-    top: '12px',
-    left: '12px',
+    top: '14px',
+    left: '14px',
     background: 'none',
     border: 'none',
-    color: 'var(--text-dim)',
+    color: 'var(--text-muted)',
     fontFamily: 'var(--font-heading)',
-    fontSize: '0.8rem',
+    fontSize: '0.7rem',
     cursor: 'pointer',
-    padding: '8px 12px',
-    transition: 'color 0.3s',
+    padding: '8px 14px',
+    transition: 'all 0.35s ease',
+    letterSpacing: '0.08em',
+    borderRadius: 'var(--radius)',
   },
   genderTaskPanel: {
     background: 'var(--card-bg)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
     border: '1px solid var(--card-border)',
     borderRadius: 'var(--radius-lg)',
-    padding: '16px',
-    marginBottom: '12px',
+    padding: '18px',
+    marginBottom: '14px',
     minHeight: '80px',
     textAlign: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
   genderPrompt: {
-    color: 'var(--text-dim)',
-    fontSize: '0.9rem',
+    color: 'var(--text-muted)',
+    fontSize: '0.85rem',
     padding: '12px',
+    letterSpacing: '0.03em',
   },
   playerIndicator: {
     fontFamily: 'var(--font-heading)',
-    fontSize: '0.75rem',
+    fontSize: '0.7rem',
     textAlign: 'center',
-    padding: '6px',
-    marginBottom: '8px',
-    borderRadius: '4px',
+    padding: '6px 10px',
+    marginBottom: '10px',
+    borderRadius: '10px',
+    letterSpacing: '0.06em',
+    backdropFilter: 'blur(4px)',
   },
 };
 
@@ -196,8 +207,8 @@ export default function App() {
           <button
             style={gameScreenStyles.backBtn}
             onClick={handleBackToMenu}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-dim)'; }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'rgba(100, 140, 255, 0.06)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
           >
             ← MENÜ
           </button>
@@ -237,8 +248,10 @@ export default function App() {
             <div style={gameScreenStyles.genderTaskPanel}>
               {game.message ? (
                 <div style={{
-                  padding: '8px',
+                  padding: '10px',
                   fontWeight: 600,
+                  fontSize: '0.9rem',
+                  letterSpacing: '0.02em',
                   color: game.message.type === 'error' ? 'var(--error)' :
                          game.message.type === 'success' ? 'var(--success)' : 'var(--player2)',
                 }}
@@ -250,83 +263,89 @@ export default function App() {
                   )}
                 </div>
               ) : selectedTask && game.selectedArticle === null ? (
-                /* Word selected, pick article */
                 <div>
-                  <div style={{ fontFamily: 'var(--font-german)', fontSize: '1.8rem', color: 'var(--text-bright)', marginBottom: '12px', fontStyle: 'italic' }}>
+                  <div style={{ fontFamily: 'var(--font-german)', fontSize: '1.8rem', color: 'var(--text-bright)', marginBottom: '14px', fontStyle: 'italic' }}>
                     {selectedTask.word}
                   </div>
-                  <div style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginBottom: '10px' }}>Welcher Artikel?</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '12px', letterSpacing: '0.05em' }}>Welcher Artikel?</div>
                   <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                    {['der', 'die', 'das'].map(g => (
-                      <button
-                        key={g}
-                        style={{
-                          padding: '10px 24px',
-                          fontSize: '1.1rem',
-                          fontWeight: 700,
-                          fontFamily: 'var(--font-heading)',
-                          background: 'var(--btn-bg)',
-                          border: '2px solid var(--card-border)',
-                          borderRadius: 'var(--radius)',
-                          color: 'var(--text)',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                        }}
-                        onClick={() => game.handleArticleSelect(g)}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.boxShadow = `0 0 15px ${g === 'der' ? '#ff006e44' : g === 'die' ? '#00d4ff44' : '#f39c1244'}`;
-                          e.currentTarget.style.borderColor = g === 'der' ? '#ff006e' : g === 'die' ? '#00d4ff' : '#f39c12';
-                          e.currentTarget.style.transform = 'scale(1.08)';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.boxShadow = 'none';
-                          e.currentTarget.style.borderColor = 'var(--card-border)';
-                          e.currentTarget.style.transform = 'scale(1)';
-                        }}
-                      >
-                        {g}
-                      </button>
-                    ))}
+                    {['der', 'die', 'das'].map(g => {
+                      const gColor = g === 'der' ? '#e8365d' : g === 'die' ? '#3db8e8' : '#e8a832';
+                      return (
+                        <button
+                          key={g}
+                          style={{
+                            padding: '10px 24px',
+                            fontSize: '1.05rem',
+                            fontWeight: 700,
+                            fontFamily: 'var(--font-heading)',
+                            letterSpacing: '0.04em',
+                            background: 'var(--btn-bg)',
+                            backdropFilter: 'blur(8px)',
+                            border: `1.5px solid var(--card-border)`,
+                            borderRadius: 'var(--radius)',
+                            color: 'var(--text)',
+                            cursor: 'pointer',
+                            transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                          }}
+                          onClick={() => game.handleArticleSelect(g)}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.boxShadow = `0 4px 20px ${gColor}18, 0 0 12px ${gColor}10`;
+                            e.currentTarget.style.borderColor = `${gColor}60`;
+                            e.currentTarget.style.color = gColor;
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.borderColor = 'var(--card-border)';
+                            e.currentTarget.style.color = 'var(--text)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          {g}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ) : selectedTask && game.selectedArticle !== null ? (
-                /* Article selected, pick cell */
                 <div>
                   <div style={{ fontFamily: 'var(--font-german)', fontSize: '1.4rem', color: 'var(--text-bright)', fontStyle: 'italic' }}>
                     <span style={{
-                      color: game.selectedArticle === 'der' ? '#ff006e' : game.selectedArticle === 'die' ? '#00d4ff' : '#f39c12',
+                      color: game.selectedArticle === 'der' ? '#e8365d' : game.selectedArticle === 'die' ? '#3db8e8' : '#e8a832',
                       fontWeight: 700,
                     }}>
                       {game.selectedArticle}
                     </span>
                     {' '}{selectedTask.word}
                   </div>
-                  <div style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '8px' }}>
-                    Wähle ein Feld auf dem Brett
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '10px', letterSpacing: '0.03em' }}>
+                    W&auml;hle ein Feld auf dem Brett
                   </div>
                 </div>
               ) : (
                 <div style={gameScreenStyles.genderPrompt}>
-                  Wähle ein Wort aus der Liste
+                  W&auml;hle ein Wort aus der Liste
                 </div>
               )}
 
               {game.aiAnswer && (
                 <div style={{
-                  background: 'rgba(0, 212, 255, 0.05)',
-                  border: '1px solid rgba(0, 212, 255, 0.2)',
+                  background: 'rgba(61, 184, 232, 0.04)',
+                  border: '1px solid rgba(61, 184, 232, 0.12)',
                   borderRadius: 'var(--radius)',
-                  padding: '8px 12px',
-                  marginTop: '8px',
+                  padding: '10px 14px',
+                  marginTop: '10px',
+                  backdropFilter: 'blur(4px)',
                 }}>
-                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.7rem', color: 'var(--player2)', marginBottom: '2px' }}>KI-ANTWORT:</div>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: 'var(--player2)', marginBottom: '3px', letterSpacing: '0.1em', opacity: 0.7 }}>KI-ANTWORT:</div>
                   <div style={{
                     fontFamily: 'var(--font-german)',
                     fontSize: '1rem',
                     color: game.aiAnswer.correct ? 'var(--success)' : 'var(--error)',
                   }}>
                     {typeof game.aiAnswer.answer === 'string' ? game.aiAnswer.answer : JSON.stringify(game.aiAnswer.answer)}
-                    {game.aiAnswer.correct ? ' ✓' : ' ✗'}
+                    {game.aiAnswer.correct ? ' \u2713' : ' \u2717'}
                   </div>
                 </div>
               )}

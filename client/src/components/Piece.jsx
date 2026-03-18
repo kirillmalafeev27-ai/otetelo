@@ -2,40 +2,43 @@ import React from 'react';
 
 const pieceStyles = {
   container: {
-    width: '85%',
-    height: '85%',
+    width: '82%',
+    height: '82%',
     borderRadius: '50%',
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transformStyle: 'preserve-3d',
+    transition: 'box-shadow 0.4s ease, transform 0.3s ease',
   },
   marker: {
-    fontSize: '10px',
+    fontSize: '9px',
     fontWeight: 700,
     position: 'absolute',
     top: '2px',
-    right: '2px',
+    right: '3px',
     lineHeight: 1,
+    opacity: 0.9,
   },
   pronoun: {
-    fontSize: '9px',
+    fontSize: '8px',
     fontWeight: 600,
-    color: '#fff',
-    textShadow: '0 0 4px rgba(0,0,0,0.8)',
+    letterSpacing: '0.02em',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textShadow: '0 1px 3px rgba(0, 0, 0, 0.6)',
     position: 'absolute',
-    bottom: '1px',
+    bottom: '2px',
     left: '50%',
     transform: 'translateX(-50%)',
     whiteSpace: 'nowrap',
   },
   shield: {
     position: 'absolute',
-    top: '-4px',
+    top: '-3px',
     left: '50%',
     transform: 'translateX(-50%)',
-    fontSize: '8px',
+    fontSize: '7px',
     display: 'flex',
     gap: '1px',
   },
@@ -43,37 +46,44 @@ const pieceStyles = {
 
 function getShapeStyle(type) {
   if (type === 'der') {
-    return { borderRadius: '4px', transform: 'rotate(45deg)', width: '70%', height: '70%' };
+    return { borderRadius: '4px', transform: 'rotate(45deg)', width: '68%', height: '68%' };
   }
   if (type === 'die') {
     return { borderRadius: '50%' };
   }
   if (type === 'das') {
-    return { borderRadius: '4px' };
+    return { borderRadius: '5px' };
   }
   return { borderRadius: '50%' };
 }
 
 export default function Piece({ player, type, shields, pronoun, fragile, dativProtect, isNew, isFlipping }) {
   const isP1 = player === 1;
+
+  // Premium gradient with glass-like reflections
   const baseColor = isP1
-    ? 'radial-gradient(circle at 35% 35%, #2a2a4e, #1a1a2e, #000)'
-    : 'radial-gradient(circle at 35% 35%, #ffffff, #e0e0ff, #8888cc)';
+    ? 'radial-gradient(ellipse at 35% 30%, #3a2a4e 0%, #1e1830 40%, #0c0818 100%)'
+    : 'radial-gradient(ellipse at 35% 30%, #ffffff 0%, #d8d8f0 40%, #a0a0c8 100%)';
+
+  // Subtle specular highlight overlay
+  const highlightGradient = isP1
+    ? 'radial-gradient(ellipse at 30% 25%, rgba(255, 255, 255, 0.12) 0%, transparent 50%)'
+    : 'radial-gradient(ellipse at 30% 25%, rgba(255, 255, 255, 0.35) 0%, transparent 50%)';
+
   const glowColor = isP1 ? 'var(--player1)' : 'var(--player2)';
   const glowShadow = isP1
-    ? '0 0 8px #ff006e88, inset 0 0 4px #ff006e44'
-    : '0 0 8px #00d4ff88, inset 0 0 4px #00d4ff44';
+    ? '0 2px 8px rgba(232, 54, 93, 0.35), inset 0 1px 3px rgba(232, 54, 93, 0.15), 0 0 1px rgba(232, 54, 93, 0.6)'
+    : '0 2px 8px rgba(61, 184, 232, 0.35), inset 0 1px 3px rgba(61, 184, 232, 0.15), 0 0 1px rgba(61, 184, 232, 0.6)';
 
   const shapeStyle = type ? getShapeStyle(type) : { borderRadius: '50%' };
 
   const fragileStyle = fragile ? {
-    opacity: 0.7,
-    border: '1px dashed var(--error)',
+    opacity: 0.6,
+    border: '1px dashed rgba(224, 80, 80, 0.5)',
   } : {};
 
   const shieldStyle = shields > 0 ? {
-    border: `2px solid var(--gold)`,
-    boxShadow: `${glowShadow}, 0 0 6px var(--gold)`,
+    border: '2px solid var(--gold)',
   } : {};
 
   const className = [
@@ -94,6 +104,15 @@ export default function Piece({ player, type, shields, pronoun, fragile, dativPr
         ...fragileStyle,
       }}
     >
+      {/* Glass specular highlight */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        borderRadius: 'inherit',
+        background: highlightGradient,
+        pointerEvents: 'none',
+      }} />
+
       {type && (
         <span style={{ ...pieceStyles.marker, color: glowColor }}>
           {type === 'der' ? '♦' : type === 'die' ? '●' : '■'}
@@ -103,9 +122,9 @@ export default function Piece({ player, type, shields, pronoun, fragile, dativPr
       {shields > 0 && (
         <span style={pieceStyles.shield}>
           {Array.from({ length: shields }).map((_, i) => (
-            <span key={i} style={{ color: 'var(--gold)' }}>🛡</span>
+            <span key={i} style={{ color: 'var(--gold)' }}>&#x1F6E1;</span>
           ))}
-          {dativProtect && <span style={{ color: '#2ecc71', fontSize: '7px' }}>+</span>}
+          {dativProtect && <span style={{ color: 'var(--success)', fontSize: '6px' }}>+</span>}
         </span>
       )}
 
